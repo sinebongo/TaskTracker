@@ -4,7 +4,7 @@ namespace TaskTrackerAPI.Application.Interfaces
 {
     public interface ITaskService
     {
-        Task<List<TaskItem>> GetAllAsync(string? q, string? sort);
+        Task<IList<TaskItem>> GetAllAsync(string? q, string? sort);
         Task<TaskItem?> GetByIdAsync(int id);
         Task<TaskItem> CreateAsync(TaskItem task);
         Task UpdateAsync(int id, TaskItem updated);

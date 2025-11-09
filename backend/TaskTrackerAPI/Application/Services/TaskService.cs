@@ -5,29 +5,50 @@ namespace TaskTrackerAPI.Application.Services
 {
     public class TaskService : ITaskService
     {
+        private ITaskRepository _repo;
+        private IConfiguration _config;
+
+        public TaskService(ITaskRepository taskRepository, IConfiguration configuration) 
+        {
+            _repo = taskRepository;
+            _config = configuration;
+        }
         public Task<TaskItem> CreateAsync(TaskItem task)
         {
-            throw new NotImplementedException();
+            task.CreatedAt = DateTime.UtcNow;
+            return _repo.AddTaskAsync(task);
         }
 
-        public Task DeleteAsync(int id)
+        public async Task DeleteAsync(int id)
         {
-            throw new NotImplementedException();
+            var entity = await _repo.GetTaskByIdAsync(id)
+            ?? throw new KeyNotFoundException("Task not found.");
+
+            await _repo.DeleteTaskAsync(entity);
         }
 
-        public Task<List<TaskItem>> GetAllAsync(string? q, string? sort)
+        public async Task<IList<TaskItem>> GetAllAsync(string? q, string? sort)
         {
-            throw new NotImplementedException();
+            return await _repo.GetTasksAsync(q, sort);
         }
 
-        public Task<TaskItem?> GetByIdAsync(int id)
+        public async Task<TaskItem?> GetByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            return await _repo.GetTaskByIdAsync(id);
         }
 
-        public Task UpdateAsync(int id, TaskItem updated)
+        public async Task UpdateAsync(int id, TaskItem updated)
         {
-            throw new NotImplementedException();
+            var existing = await _repo.GetTaskByIdAsync(id)
+           ?? throw new KeyNotFoundException("Task not found.");
+
+            existing.Title = updated.Title;
+            existing.Description = updated.Description;
+            existing.Status = updated.Status;
+            existing.Priority = updated.Priority;
+            existing.DueDate = updated.DueDate;
+
+            await _repo.UpdateTaskAsync(existing);
         }
     }
 }

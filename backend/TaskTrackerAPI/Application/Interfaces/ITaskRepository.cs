@@ -11,6 +11,6 @@ namespace TaskTrackerAPI.Application.Interfaces
         
         Task UpdateTaskAsync(TaskItem task);
 
-        Task DeleteTaskAsync(int id);
+        Task DeleteTaskAsync(TaskItem task);
     }
 }
