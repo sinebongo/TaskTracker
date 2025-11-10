@@ -1,0 +1,181 @@
+<div class="task-list-container">
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">
+        <span class="hero-icon">📋</span>
+        Your Tasks
+      </h1>
+      <p class="hero-subtitle">Stay organized and productive with your task management</p>
+    </div>
+    <div class="hero-actions">
+      <button routerLink="/tasks/new" class="btn btn-primary btn-lg hero-btn">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 4V20M20 12H4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Create New Task
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-container">
+      <div class="search-container">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+            placeholder="Search your tasks..."
+            class="search-input"
+          />
+          <button *ngIf="searchTerm" (click)="searchTerm=''; onSearch()" class="clear-search">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <div class="sort-container">
+        <div class="sort-wrapper">
+          <svg class="sort-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 6H21M7 12H17M11 18H13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <select [(ngModel)]="sortBy" (change)="onSortChange()" class="sort-select">
+            <option value="">Sort by...</option>
+            <option value="dueDate">Due Date</option>
+            <option value="priority">Priority</option>
+            <option value="title">Title</option>
+            <option value="status">Status</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span class="stat-number">{{ filteredTasks.length }}</span>
+        <span class="stat-label">Total Tasks</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">{{ getCompletedCount() }}</span>
+        <span class="stat-label">Completed</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">{{ getPendingCount() }}</span>
+        <span class="stat-label">Pending</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Loading your tasks...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && filteredTasks.length === 0" class="empty-state">
+    <div class="empty-icon">📝</div>
+    <h3 class="empty-title">No tasks found</h3>
+    <p class="empty-description">
+      {{ searchTerm ? 'Try adjusting your search criteria' : 'Create your first task to get started!' }}
+    </p>
+    <button *ngIf="!searchTerm" routerLink="/tasks/new" class="btn btn-primary">
+      Create Your First Task
+    </button>
+  </div>
+
+  <!-- Tasks Grid -->
+  <div *ngIf="!isLoading && filteredTasks.length > 0" class="tasks-section">
+    <div class="tasks-grid">
+      <div *ngFor="let task of filteredTasks; trackBy: trackByTaskId" class="task-card" 
+           [class.task-completed]="isCompleted(task.status)">
+        
+        <!-- Task Card Header -->
+        <div class="task-card-header">
+          <div class="task-priority">
+            <span class="priority-indicator" [class]="getPriorityClass(task.priority)"></span>
+            <span class="priority-label">{{ getPriorityLabel(task.priority) }}</span>
+          </div>
+          <div class="task-status">
+            <span class="status-badge" [class]="getStatusClass(task.status)">
+              {{ getStatusLabel(task.status) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Task Content -->
+        <div class="task-content">
+          <h3 class="task-title" [class.completed]="isCompleted(task.status)">
+            {{ task.title }}
+          </h3>
+          <p *ngIf="task.description" class="task-description">
+            {{ task.description }}
+          </p>
+        </div>
+
+        <!-- Task Meta Information -->
+        <div class="task-meta" *ngIf="task.dueDate || task.createdAt">
+          <div class="meta-item" *ngIf="task.dueDate">
+            <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 2V6M16 2V6M3 10H21M5 4H19C20.1046 4 21 4.89543 21 6V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V6C3 4.89543 3.89543 4 5 4Z" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            <span class="meta-text" [class.overdue]="isOverdue(task.dueDate)">
+              Due {{ task.dueDate | date:'MMM d, y' }}
+            </span>
+          </div>
+          <div class="meta-item">
+            <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 8V12L16 16M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            <span class="meta-text">
+              Created {{ task.createdAt | date:'MMM d, y' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Task Actions -->
+        <div class="task-actions">
+          <button 
+            [routerLink]="['/tasks', task.id]" 
+            class="btn btn-secondary btn-sm action-btn"
+            title="View Details"
+          >
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 12S5 4 12 4S23 12 23 12S19 20 12 20S1 12 1 12Z" stroke="currentColor" stroke-width="2"/>
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span>View</span>
+          </button>
+          <button 
+            [routerLink]="['/tasks', task.id, 'edit']" 
+            class="btn btn-secondary btn-sm action-btn"
+            title="Edit Task"
+          >
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13M18.5 2.50001C18.8978 2.10219 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.43739 22.1213 4.00001C22.1213 4.56264 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span>Edit</span>
+          </button>
+          <button 
+            (click)="deleteTask(task.id)" 
+            class="btn btn-danger btn-sm action-btn"
+            title="Delete Task"
+          >
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 6H5H21M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19ZM10 11V17M14 11V17" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span>Delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
